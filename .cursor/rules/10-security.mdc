@@ -1,0 +1,59 @@
+---
+description: Security standards — strong but practical, applies to all code
+globs:
+alwaysApply: true
+---
+
+# Security Standards (strong but practical)
+
+## Trust boundaries
+- Treat ALL external input as hostile: request bodies, query params, headers,
+  cookies, file uploads, third-party API responses, webhook payloads.
+- Validate on the server. Client-side validation is UX only, never security.
+
+## Injection prevention
+- Use parameterized queries / prepared statements / ORM bindings ONLY.
+  NEVER build SQL, NoSQL, LDAP, or shell commands by string concatenation.
+- Never pass user input into eval/exec/shell/templates without strict escaping.
+
+## Output handling
+- Escape/encode all dynamic data at the output point (HTML, JS, URL, CSS).
+- Set a Content-Security-Policy; avoid inline scripts where possible.
+
+## Authentication
+- Hash passwords with bcrypt / argon2 / scrypt (salted, slow).
+  NEVER store plaintext; never use md5/sha1 for passwords.
+- Use secure, httpOnly, sameSite cookies or short-lived signed tokens with
+  expiry and a refresh strategy.
+
+## Authorization (the #1 real-world breach class)
+- Check authorization on EVERY protected action, not just authentication.
+- Verify the caller may access the SPECIFIC resource (object-level auth):
+  a user requesting /orders/123 must be confirmed to own order 123.
+- Default-deny: a missing permission check must fail closed.
+
+## Secrets
+- NEVER hardcode secrets, API keys, passwords, or tokens. Load from env / a
+  secrets manager. Never log secrets, tokens, passwords, full PII, or full PANs.
+
+## Transport & data
+- Assume HTTPS/TLS everywhere; never disable certificate verification.
+- Encrypt sensitive data at rest where supported.
+- Least privilege for DB users, API scopes, and cloud roles.
+
+## Common protections
+- CSRF protection on state-changing requests using cookie sessions.
+- Rate-limit auth, password-reset, and abuse-prone endpoints.
+- Validate uploads (type, size); store outside web root; never trust the
+  client-supplied filename or content-type.
+- Set headers: HSTS, X-Content-Type-Options, X-Frame-Options / CSP.
+
+## Errors must not leak
+- Generic error messages to clients; full detail logged server-side only.
+- Never expose stack traces, SQL, file paths, or internal hostnames to users.
+
+## Dependencies
+- Prefer maintained libraries over hand-rolled crypto/auth/parsing.
+- Flag any dependency added; avoid abandoned or known-vulnerable packages.
+
+> Mark security-sensitive logic in code with a `SECURITY:` comment.

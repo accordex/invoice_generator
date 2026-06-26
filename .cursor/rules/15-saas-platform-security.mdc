@@ -1,0 +1,123 @@
+---
+description: SaaS multi-tenant platform security — tenant isolation, two-layer privileges, billing & provisioning. Applies to all code in this control plane.
+globs:
+alwaysApply: true
+---
+
+# SaaS Platform Security (multi-tenant control plane)
+Accordex Systems Pvt Ltd / Softmerce Technologies
+
+These rules EXTEND `10-security.mdc`; they do not replace it. Where the base file
+gives a general principle (e.g. object-level authorization), the rules here state
+how it MUST be applied in this specific platform. If any instruction conflicts,
+the stricter rule wins. Mark enforcement points in code with a `SECURITY:` comment.
+
+This platform sells software products to client companies (tenants). It uses
+**database-per-tenant**: a shared control-plane database, plus one separate
+database per tenant. The biggest risks are (1) one tenant reaching another
+tenant's data, (2) a user exceeding what their plan/role allows, and (3) billing
+tampering or double-charging. The rules below exist to prevent exactly those.
+
+## 1. Tenant isolation (the #1 risk in this system)
+- The tenant identity for any request MUST be derived from the authenticated
+  session/token on the server — NEVER from a client-supplied tenant id, body
+  field, query param, header, or hostname the user can set.
+- A request MUST NEVER be able to choose, name, or influence WHICH tenant
+  database it connects to. The database target is resolved server-side from the
+  authenticated tenant only.
+- Every query against tenant data must be scoped to the resolved tenant. There is
+  no "all tenants" query path in normal request handling. Cross-tenant reads are
+  reserved for explicit platform-admin operations that are separately authorized
+  and audited.
+- `SECURITY:` comment required at the point where tenant identity is resolved and
+  where the tenant database connection is selected.
+
+## 2. Cross-tenant query guard (fail closed)
+- Provide a data-access guard (e.g. Prisma middleware or a repository layer) that
+  refuses to run a tenant-scoped query when no tenant scope is set. Missing scope
+  = throw, never "return everything".
+- Default-deny applies to data access, not just permissions: if the code cannot
+  prove which tenant a query belongs to, it must fail, not guess.
+
+## 3. Tenant database credentials & the connection manager
+- Tenant DB credentials (host, user, password) are stored ENCRYPTED at rest
+  (AES-256-GCM or equivalent), key from env/secrets manager — never in source,
+  never in plain columns.
+- Decryption happens ONLY inside the connection manager at the moment a
+  connection is opened. Decrypted credentials must never be logged, returned in
+  an API response, included in an error message, or placed in client-visible state.
+- Each tenant database uses a LEAST-PRIVILEGE database user scoped to that
+  database only. Never connect tenants using a shared superuser or a user that can
+  see other databases.
+- The connection manager must cap concurrent tenant connections and evict idle
+  ones; a tenant must not be able to exhaust connections for others
+  (denial-of-service protection).
+
+## 4. Two-layer authorization (plan ceiling + user/role grant)
+- Every protected action is checked on the SERVER against BOTH layers:
+  (a) the tenant's plan ceiling for that product/plan/industry, AND
+  (b) the user's effective grant (role grant, with per-user override winning).
+  Effective permission = planCeiling AND (userOverride ?? roleGrant).
+- A node/action not permitted by the plan can NEVER be allowed by a role or user
+  grant. The plan is a hard ceiling.
+- Authorization is enforced in the API/server layer. UI hiding of buttons or
+  fields is UX only and is NEVER the security boundary.
+- Missing or unresolved permission = deny (fail closed). If a stored grant exceeds
+  the current plan ceiling (e.g. after a downgrade), the action is denied and the
+  event is logged.
+- `SECURITY:` comment required at each server-side permission check.
+
+## 5. Usage-limit & metering integrity (gates revenue)
+- Usage checks that gate actions (especially seat / pay-to-expand limits and any
+  hard-block service) are enforced on the SERVER against the authoritative
+  control-plane balance — never trusted from the client and never enforced in the
+  UI alone.
+- Limit increases happen only as a result of a verified event (a confirmed
+  payment, or an explicit admin action), never from a client request asserting a
+  new limit.
+- Counting writes from tenant databases into the authoritative ledger must be
+  idempotent so retries cannot inflate or deflate usage.
+
+## 6. Billing, payments & webhooks
+- NEVER store raw card data (PAN, CVV). Use the payment gateway's vault/token;
+  store only gateway references.
+- Verify the cryptographic signature of every inbound payment/gateway webhook
+  before acting on it; reject unsigned or invalid-signature payloads.
+- All payment and renewal operations are idempotent (idempotency keys / unique
+  constraints) so a retried webhook or job can NEVER double-charge or
+  double-credit.
+- Money is stored in minor units (integers); never use floating point for
+  currency. Freeze currency + FX rate onto an invoice at issue time.
+- Invoice numbering (Series) must be allocated atomically under concurrency so two
+  invoices can never share a number.
+
+## 7. Tenant provisioning & lifecycle safety
+- Provisioning a tenant database runs as a background job with least-privilege
+  rights; it must be idempotent and must clean up partial state on failure
+  (no half-provisioned tenant left reachable).
+- On suspension/cancellation, access is revoked server-side immediately; the
+  tenant database retention/deletion follows the documented policy and the action
+  is audited.
+- Integration tokens / API keys issued to products or tenants are stored encrypted,
+  shown once, and revocable. Treat them like passwords.
+
+## 8. Platform-admin (super) actions
+- Platform-admin actions that can cross tenant boundaries (impersonation, support
+  access, cross-tenant reports) require explicit elevated authorization, are
+  logged to the append-only event log with actor + target tenant, and are
+  time-boxed where possible.
+- "Log in as tenant" / impersonation must be clearly recorded and must not silently
+  inherit super privileges inside the tenant beyond what the support task needs.
+
+## 9. Audit (non-negotiable for a billing system)
+- Write an append-only event-log entry for: auth success/failure, permission
+  denials, plan/role/privilege changes, plan-ceiling violations, usage-limit
+  blocks and overrides, every invoice/payment/refund, provisioning/suspension, and
+  every platform-admin cross-tenant action.
+- The event log records actor, tenant, action, and before/after where relevant.
+  It is never editable or deletable through application code.
+
+> These rules are specific to this platform. General secure-coding requirements
+> (input validation, injection prevention, output encoding, secrets, transport,
+> error non-leakage, dependencies) remain governed by `10-security.mdc` and apply
+> in full.

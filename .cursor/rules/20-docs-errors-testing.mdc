@@ -1,0 +1,35 @@
+---
+description: Comments, error handling, logging, and testing standards
+globs:
+alwaysApply: true
+---
+
+# Documentation, Errors, Logging & Testing
+
+## Comments & documentation (required)
+- Every public function/method/class gets a doc comment: purpose, parameters,
+  return value, and errors/exceptions it can raise.
+- Inline comments explain WHY (intent, trade-offs, edge cases), not WHAT.
+- Mark security-sensitive logic, e.g. `SECURITY: validates resource owner`.
+- Use `TODO:` / `FIXME:` with a short reason — never a context-free TODO.
+- Keep comments truthful and updated when the code changes.
+
+## Error handling
+- Never swallow errors silently (no empty catch blocks).
+- Fail fast on programmer errors; handle and recover from operational errors.
+- Use a consistent error/response shape across the codebase.
+- Clean up resources in finally/defer/using blocks.
+- Validate preconditions at the top of functions; return early on failure.
+
+## Logging & observability
+- Use structured logging (key/value), not bare prints.
+- Log auth success/failure, access denials, and admin actions.
+- NEVER log secrets or sensitive PII — redact first.
+- Include trace context (request id, user id) for debugging.
+
+## Testing
+- New logic ships with tests. Auth, payments, and data mutations MUST be tested.
+- Cover happy path, boundaries, and at least one failure/abuse case.
+- Tests must be deterministic and independent (no shared mutable state; no real
+  network/DB unless integration-tagged).
+- Name tests by behaviour: `should_<expected>_when_<condition>`.

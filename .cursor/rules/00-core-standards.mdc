@@ -1,0 +1,33 @@
+---
+description: Master engineering standards — applies to all code, all languages
+globs:
+alwaysApply: true
+---
+
+# Master Engineering Standards (Language-Agnostic)
+Accordex Systems Pvt Ltd / Softmerce Technologies
+
+These rules apply to ALL code in ANY language. Language-specific rule files may
+refine syntax conventions but must never weaken the security or quality
+principles here.
+
+## Prime directive
+- Correctness and security come before speed of delivery. If a request would
+  produce insecure code, implement the secure version and note it.
+- Never invent APIs, fields, env vars, or table names. If unknown, leave a
+  clearly marked `TODO:` explaining what is needed — do not guess silently.
+- Prefer clarity over cleverness. Code is read far more often than written.
+- Follow the existing project's conventions and structure before inventing new ones.
+
+## Code quality
+- One responsibility per function/class/module; keep functions short.
+- DRY: extract shared logic instead of copy-pasting.
+- Descriptive names; avoid deep nesting (prefer early returns / guard clauses).
+- No dead code, leftover commented-out blocks, or debug prints in commits.
+- Isolate side effects; keep logic pure where practical.
+
+## When unsure
+- State assumptions explicitly at the top of the response.
+- Offer the secure/correct option even if a quicker one was requested.
+- Ask a clarifying question only when a wrong guess would be costly; otherwise
+  proceed with the safest reasonable default and flag it.

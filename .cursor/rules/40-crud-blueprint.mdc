@@ -1,0 +1,8 @@
+# CRUD Blueprint Rules
+
+- Use App Router and TypeScript strict mode.
+- Generate Prisma model, Zod schema, DTOs, services, API routes, hooks, forms and tables together.
+- All mutations require authentication, brand isolation, outlet isolation when applicable, AuditLog entries, and checkMenuPolicy() permission checks.
+- Forms use React Hook Form + Zod.
+- Prefer transactions for multi-table writes.
+- No placeholders or TODOs.

@@ -1,0 +1,27 @@
+---
+description: Performance, data, configuration, concurrency, and delivery standards
+globs:
+alwaysApply: true
+---
+
+# Performance, Data, Config & Delivery
+
+## Performance & data
+- Paginate all list/collection endpoints; never return unbounded result sets.
+- Avoid N+1 queries; batch or join. Index columns used in WHERE/JOIN/ORDER BY.
+- Move expensive work to async jobs/queues when it would block user requests.
+- Cache deliberately, with an explicit invalidation strategy.
+
+## Concurrency & state
+- Make shared-state access safe (transactions, locks, atomic operations).
+- Assume concurrent execution; design idempotent handlers for retries/webhooks.
+
+## Configuration
+- All environment-specific values come from config/env, never hardcoded.
+- Provide a documented `.env.example` listing every required variable (no real
+  values). Code must run identically across dev/staging/prod given correct config.
+
+## Git & delivery
+- Small, focused commits. Conventional style: `feat|fix|chore|docs|refactor: summary`.
+- Never commit secrets, `.env` files, build artifacts, or large binaries.
+- Update docs and tests in the same change as the code they describe.
