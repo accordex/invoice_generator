@@ -11,6 +11,24 @@ export const authConfig = {
   pages: { signIn: '/login' },
   providers: [],
   callbacks: {
+    /**
+     * Keeps redirects on the host the user visited. Without this, relative paths
+     * like `/login` are prefixed with AUTH_URL (e.g. invoice.softmerce.com)
+     * even when the app is opened at invoicegenerator.softmerce.com.
+     */
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith('/')) {
+        return url;
+      }
+      try {
+        if (new URL(url).origin === new URL(baseUrl).origin) {
+          return url;
+        }
+      } catch {
+        /* ignore malformed URL */
+      }
+      return baseUrl;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;

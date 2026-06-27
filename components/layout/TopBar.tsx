@@ -53,7 +53,10 @@ export function TopBar() {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
-            onClick={() => signOut({ callbackUrl: '/login' })}
+            onClick={async () => {
+              await signOut({ redirect: false });
+              window.location.href = '/login';
+            }}
           >
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
