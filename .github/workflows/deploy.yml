@@ -24,4 +24,4 @@ jobs:
             git pull origin dev
             npm install
             npm run build
-            pm2 restart invoice_generator || pm2 start npm --name "invoice_generator" -- start
+            pm2 startOrReload ecosystem.config.cjs --update-env

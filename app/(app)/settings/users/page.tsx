@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
 import { apiFetch } from '@/lib/api/client';
 import { formatDateIN } from '@/lib/format';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, type ColumnDef } from '@/components/shared/DataTable';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Guarded } from '@/components/privilege/Guarded';
 
 interface UserRow {
@@ -63,7 +65,20 @@ export default function UsersPage() {
 
   return (
     <Guarded action="USER.LIST">
-      <PageHeader title="Users" description="Manage user accounts and role assignments" />
+      <PageHeader
+        title="Users"
+        description="Manage user accounts and role assignments"
+        actions={
+          <Guarded action="USER.CREATE">
+            <Button asChild>
+              <Link href="/settings/users/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Add user
+              </Link>
+            </Button>
+          </Guarded>
+        }
+      />
       <DataTable columns={columns} data={data?.data ?? []} meta={data?.meta} loading={isLoading} onPageChange={setPage} getRowKey={(r) => r.id} />
     </Guarded>
   );

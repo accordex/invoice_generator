@@ -1,11 +1,13 @@
 'use client';
 
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/client';
 import { formatDateIN } from '@/lib/format';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Guarded } from '@/components/privilege/Guarded';
 
@@ -34,7 +36,19 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
   return (
     <Guarded action="USER.VIEW">
-      <PageHeader title={user.name ?? user.email} description={user.email} />
+      <PageHeader
+        title={user.name ?? user.email}
+        description={user.email}
+        actions={
+          !user.isSuperAdmin ? (
+            <Guarded action="USER.EDIT">
+              <Button asChild variant="outline">
+                <Link href={`/settings/users/${params.id}/edit`}>Edit user</Link>
+              </Button>
+            </Guarded>
+          ) : undefined
+        }
+      />
 
       <div className="mb-6 flex gap-2">
         <Badge variant={user.isActive ? 'success' : 'destructive'}>{user.isActive ? 'Active' : 'Inactive'}</Badge>

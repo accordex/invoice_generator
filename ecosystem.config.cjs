@@ -5,7 +5,7 @@ module.exports = {
       name: 'invoice_generator',
       cwd: __dirname,
       script: 'npm',
-      args: 'run start',
+      args: ['run', 'start'],
       interpreter: 'none',
       env: {
         NODE_ENV: 'production',
@@ -15,7 +15,7 @@ module.exports = {
       name: 'invoice_generator_worker',
       cwd: __dirname,
       script: 'npm',
-      args: 'run worker',
+      args: ['run', 'worker'],
       interpreter: 'none',
       env: {
         NODE_ENV: 'production',
