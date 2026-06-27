@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeModes, registryDefault } from '@/lib/privilege/resolver';
+import { mergeModes, registryDefault, type Mode } from '@/lib/privilege/resolver';
 
 describe('privilege resolver', () => {
   it('should_default_actions_to_no_access_not_deny', () => {
@@ -21,7 +21,7 @@ describe('privilege resolver', () => {
   });
 
   it('should_block_allow_after_explicit_deny', () => {
-    let mode = 'DENY';
+    let mode: Mode = 'DENY';
     mode = mergeModes('ACTION', mode, 'ALLOW').mode;
     expect(mode).toBe('DENY');
   });
